@@ -28,14 +28,6 @@ async function runBuild() {
     });
 
     console.log('Build completed successfully!');
-    // List files to verify
-    const fs = require('fs');
-    if (fs.existsSync(path.join(__dirname, 'dist'))) {
-       console.log('Files in dist:', fs.readdirSync(path.join(__dirname, 'dist')));
-       if (fs.existsSync(path.join(__dirname, 'dist', 'assets'))) {
-         console.log('Files in dist/assets:', fs.readdirSync(path.join(__dirname, 'dist', 'assets')));
-       }
-    }
     process.exit(0);
   } catch (error) {
     console.error('Build failed:', error);
