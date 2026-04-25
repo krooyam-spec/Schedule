@@ -11,7 +11,7 @@ import { SubjectManager } from './components/SubjectManager';
 import { TeacherManager } from './components/TeacherManager';
 import { ClassroomManager } from './components/ClassroomManager';
 import { TimetableGrid } from './components/TimetableGrid';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');

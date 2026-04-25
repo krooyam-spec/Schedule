@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { useAppState } from '../AppContext';
 import { generateAutoTimetable, DAYS_LIST, PERIODS_PER_DAY } from '../lib/scheduler';
 import { THAI_DAYS } from '../types';

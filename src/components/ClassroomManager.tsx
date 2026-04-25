@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAppState } from '../AppContext';
 import { Classroom } from '../types';
 import { Plus, Trash2, Edit2, School, GraduationCap } from 'lucide-react';
