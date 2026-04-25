@@ -67,6 +67,71 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+const mysql = require('mysql2/promise');
+
+app.post('/api/db/update-schema', async (req, res) => {
+  const config = req.body;
+  if (!config || !config.host) {
+    return res.status(400).json({ success: false, error: 'Database configuration is missing' });
+  }
+
+  let connection;
+  try {
+    connection = await mysql.createConnection({
+      host: config.host,
+      user: config.user,
+      password: config.password,
+      database: config.database,
+      port: config.port || 3306
+    });
+
+    // Create tables
+    const queries = [
+      `CREATE TABLE IF NOT EXISTS subjects (
+        id VARCHAR(50) PRIMARY KEY,
+        code VARCHAR(20),
+        name VARCHAR(100),
+        category VARCHAR(100),
+        hoursPerWeek INT
+      )`,
+      `CREATE TABLE IF NOT EXISTS teachers (
+        id VARCHAR(50) PRIMARY KEY,
+        name VARCHAR(100),
+        expertSubjects TEXT,
+        maxHoursPerWeek INT
+      )`,
+      `CREATE TABLE IF NOT EXISTS classrooms (
+        id VARCHAR(50) PRIMARY KEY,
+        name VARCHAR(50),
+        level VARCHAR(50)
+      )`,
+      `CREATE TABLE IF NOT EXISTS timetable (
+        id VARCHAR(50) PRIMARY KEY,
+        classroomId VARCHAR(50),
+        subjectId VARCHAR(50),
+        teacherId VARCHAR(50),
+        day VARCHAR(20),
+        period INT
+      )`,
+      `CREATE TABLE IF NOT EXISTS settings (
+        id VARCHAR(10) PRIMARY KEY,
+        data TEXT
+      )`
+    ];
+
+    for (const q of queries) {
+      await connection.query(q);
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('MySQL Schema Update Error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  } finally {
+    if (connection) await connection.end();
+  }
+});
+
 app.get('/api/settings', (req, res) => res.json(readData('settings', {})));
 app.post('/api/settings', (req, res) => {
   writeData('settings', req.body);

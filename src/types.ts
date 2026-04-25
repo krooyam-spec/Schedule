@@ -83,8 +83,17 @@ export interface ActivityPeriod {
   period: number;
 }
 
+export interface DbSettings {
+  host: string;
+  user: string;
+  password?: string;
+  database: string;
+  port: number;
+}
+
 export interface AppSettings extends SchoolSettings {
   activities: ActivityPeriod[];
+  dbConfig?: DbSettings;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -98,5 +107,12 @@ export const DEFAULT_SETTINGS: AppSettings = {
   activities: [
     { id: '1', name: 'กิจกรรมชุมนุม', day: 'Wednesday', period: 7 },
     { id: '2', name: 'ลูกเสือ/เนตรนารี', day: 'Thursday', period: 8 },
-  ]
+  ],
+  dbConfig: {
+    host: 'localhost',
+    user: 'root',
+    password: '',
+    database: 'siamschedule',
+    port: 3306
+  }
 };
