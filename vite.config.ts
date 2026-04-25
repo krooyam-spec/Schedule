@@ -1,15 +1,16 @@
-import tailwindcss from '@tailwindcss/vite';
-import react from '@vitejs/plugin-react';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { defineConfig, loadEnv } from 'vite';
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
+import path from 'path';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+export default defineConfig(({ mode }) => {
+  // ใช้เส้นทางแบบแน่นอน (Absolute path) เพื่อป้องกันการสแกนหาไฟล์ผิดที่
+  const root = process.cwd();
+  const env = loadEnv(mode, root, '');
 
-export default defineConfig(({mode}) => {
-  const env = loadEnv(mode, __dirname, '');
   return {
-    root: __dirname,
+    // ระบุ root ให้ชัดเจนว่าเอาแค่ที่นี่
+    root: root,
     base: './',
     plugins: [react(), tailwindcss()],
     define: {
@@ -17,16 +18,24 @@ export default defineConfig(({mode}) => {
     },
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, './src'),
+        '@': path.resolve(root, 'src'),
       },
     },
     build: {
-      outDir: path.resolve(__dirname, 'dist'),
+      outDir: 'dist',
+      assetsDir: 'assets',
       emptyOutDir: true,
-      reportCompressedSize: false,
+      // ป้องกัน esbuild ไม่ให้พยายามไปอ่านข้างนอก
+      commonjsOptions: {
+        include: [/node_modules/],
+      },
     },
+    // สั่งให้ Vite สนใจเฉพาะไฟล์ในโปรเจกต์เท่านั้น
     server: {
-      hmr: process.env.DISABLE_HMR !== 'true',
-    },
+      fs: {
+        strict: true,
+        allow: [root]
+      }
+    }
   };
 });
