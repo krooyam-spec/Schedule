@@ -17,17 +17,10 @@ app.use((req, res, next) => {
 
 const STATIC_PATH = path.join(__dirname, 'dist');
 
-console.log('Static root:', STATIC_PATH);
-
-// Log all requests to help debug
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-  next();
-});
-
-// Serve everything from dist
+// Serve static files from the 'dist' directory
 app.use(express.static(STATIC_PATH, {
-  maxAge: '1d'
+  maxAge: '1d',
+  index: false // We handle the root / with res.sendFile for SPA support
 }));
 
 // API Routes
@@ -35,15 +28,10 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'SiamSchedule Server is running' });
 });
 
-// Database check
-console.log('Checking database connection...');
-console.log('Database tables verified.');
-
 // Handle SPA routing - return index.html for all non-API routes
 app.get('*', (req, res) => {
-  // If it's a request for a static file that wasn't found by express.static, return 404
+  // If it's a request for a static file (contains a dot) or an API route that wasn't caught, return 404
   if (req.url.includes('.') || req.url.startsWith('/api')) {
-    console.warn(`Resource not found: ${req.url}`);
     return res.status(404).send('Resource not found');
   }
   
@@ -54,7 +42,7 @@ app.get('*', (req, res) => {
   res.sendFile(indexPath, (err) => {
     if (err) {
       console.error('Error sending index.html:', err);
-      res.status(500).send('Error loading application');
+      res.status(500).send('Error loading application index');
     }
   });
 });
