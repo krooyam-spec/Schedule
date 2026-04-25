@@ -20,6 +20,9 @@ app.use(express.json());
 const STATIC_PATH = path.join(__dirname, 'dist');
 const INDEX_HTML = path.join(STATIC_PATH, 'index.html');
 
+// Serve static files from the 'dist' directory
+app.use(express.static(STATIC_PATH));
+
 // API Routes
 app.get('/api/health', (req, res) => {
   res.json({ 
