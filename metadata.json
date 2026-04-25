@@ -1,0 +1,6 @@
+{
+  "name": "SiamSchedule",
+  "description": "ระบบจัดตารางสอนอัตโนมัติสำหรับโรงเรียนประถมศึกษาและมัธยมศึกษาของไทย รองรับหลักสูตรแกนกลางและข้อกำหนดรายวิชา",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
