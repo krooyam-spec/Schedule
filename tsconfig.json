@@ -22,14 +22,13 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true,
-    "rootDir": ".",
-    "baseUrl": "."
+    "rootDir": "./",
+    "baseUrl": "./"
   },
   "include": [
-    "src/**/*",
-    "server.ts",
-    "vite.config.ts",
-    "schema.sql"
+    "./src/**/*",
+    "./server.ts",
+    "./vite.config.ts"
   ],
   "exclude": [
     "node_modules",
