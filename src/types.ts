@@ -65,3 +65,38 @@ export const DEFAULT_SUBJECTS: Subject[] = [
   { id: "s6", code: "พ11101", name: "สุขศึกษา", category: SubjectCategory.HEALTH, hoursPerWeek: 1 },
   { id: "s7", code: "ศ11101", name: "ศิลปะ", category: SubjectCategory.ARTS, hoursPerWeek: 1 },
 ];
+
+export interface SchoolSettings {
+  schoolName: string;
+  academicYear: string;
+  semester: string;
+  totalPeriods: number;
+  periodDuration: number;
+  lunchPeriod: number;
+  startTime: string; // e.g. "08:30"
+}
+
+export interface ActivityPeriod {
+  id: string;
+  name: string;
+  day: DayOfWeek;
+  period: number;
+}
+
+export interface AppSettings extends SchoolSettings {
+  activities: ActivityPeriod[];
+}
+
+export const DEFAULT_SETTINGS: AppSettings = {
+  schoolName: "โรงเรียนตัวอย่าง",
+  academicYear: "2567",
+  semester: "1",
+  totalPeriods: 8,
+  periodDuration: 50,
+  lunchPeriod: 4,
+  startTime: "08:30",
+  activities: [
+    { id: '1', name: 'กิจกรรมชุมนุม', day: 'Wednesday', period: 7 },
+    { id: '2', name: 'ลูกเสือ/เนตรนารี', day: 'Thursday', period: 8 },
+  ]
+};

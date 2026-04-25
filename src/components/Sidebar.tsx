@@ -74,8 +74,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
       </nav>
 
       <div className="p-4 border-t border-slate-100">
-        <button className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-all text-slate-400 hover:text-slate-800">
-          <Settings size={22} />
+        <button 
+          onClick={() => setActiveTab('settings')}
+          className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${
+            activeTab === 'settings' 
+              ? 'bg-blue-50 text-blue-600 font-bold' 
+              : 'hover:bg-slate-50 text-slate-400 hover:text-slate-800'
+          }`}
+        >
+          <Settings size={22} className={activeTab === 'settings' ? 'text-blue-600' : ''} />
           {isOpen && <span className="font-medium">ตั้งค่าระบบ</span>}
         </button>
       </div>

@@ -11,6 +11,7 @@ import { SubjectManager } from './components/SubjectManager';
 import { TeacherManager } from './components/TeacherManager';
 import { ClassroomManager } from './components/ClassroomManager';
 import { TimetableGrid } from './components/TimetableGrid';
+import { SystemSettings } from './components/SystemSettings';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const AppContent: React.FC = () => {
@@ -23,6 +24,7 @@ const AppContent: React.FC = () => {
       case 'teachers': return <TeacherManager />;
       case 'classrooms': return <ClassroomManager />;
       case 'timetable': return <TimetableGrid />;
+      case 'settings': return <SystemSettings />;
       default: return <Dashboard />;
     }
   };
