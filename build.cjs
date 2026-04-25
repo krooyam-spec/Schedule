@@ -20,7 +20,7 @@ async function runBuild() {
       build: {
         outDir: 'dist',
         emptyOutDir: true,
-        assetsDir: 'assets',
+        assetsDir: '',
         rollupOptions: {
           input: path.resolve(__dirname, 'index.html'),
         },

@@ -3,30 +3,36 @@ const path = require('path');
 const cors = require('cors');
 require('dotenv').config();
 
+const fs = require('fs');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
 
-// Log all requests to help debug 404s
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-  next();
-});
-
 const STATIC_PATH = path.join(__dirname, 'dist');
-
-// Serve static files from the 'dist' directory
-app.use(express.static(STATIC_PATH, {
-  maxAge: '1d',
-  index: false // We handle the root / with res.sendFile for SPA support
-}));
 
 // API Routes
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'SiamSchedule Server is running' });
+  let files = [];
+  try {
+    if (fs.existsSync(STATIC_PATH)) {
+      files = fs.readdirSync(STATIC_PATH);
+    }
+  } catch (e) {
+    files = ['Error reading dist: ' + e.message];
+  }
+  res.json({ 
+    status: 'ok', 
+    message: 'SiamSchedule Server is running',
+    staticPath: STATIC_PATH,
+    files: files
+  });
 });
+
+// Serve static files from the 'dist' directory
+app.use(express.static(STATIC_PATH));
 
 // Handle SPA routing - return index.html for all non-API routes
 app.get('*', (req, res) => {
