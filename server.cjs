@@ -70,10 +70,20 @@ app.get('/api/health', (req, res) => {
 const mysql = require('mysql2/promise');
 
 app.post('/api/db/update-schema', async (req, res) => {
-  const config = req.body;
-  if (!config || !config.host) {
-    return res.status(400).json({ success: false, error: 'Database configuration is missing' });
+  // Use environment variables as preferred config
+  const config = {
+    host: process.env.DB_HOST || req.body.host,
+    user: process.env.DB_USER || req.body.user,
+    password: process.env.DB_PASSWORD || req.body.password,
+    database: process.env.DB_NAME || req.body.database,
+    port: parseInt(process.env.DB_PORT || req.body.port || '3306')
+  };
+
+  if (!config.host) {
+    return res.status(400).json({ success: false, error: 'Database configuration (DB_HOST) is missing in environment variables' });
   }
+
+  console.log(`Attempting MySQL schema update for ${config.database}@${config.host}`);
 
   let connection;
   try {
@@ -82,7 +92,7 @@ app.post('/api/db/update-schema', async (req, res) => {
       user: config.user,
       password: config.password,
       database: config.database,
-      port: config.port || 3306
+      port: config.port
     });
 
     // Create tables
@@ -113,6 +123,16 @@ app.post('/api/db/update-schema', async (req, res) => {
         day VARCHAR(20),
         period INT
       )`,
+      `CREATE TABLE IF NOT EXISTS teacher_loads (
+        id VARCHAR(50) PRIMARY KEY,
+        teacherId VARCHAR(50),
+        subjectCode VARCHAR(20),
+        subjectName VARCHAR(100),
+        level VARCHAR(50),
+        room VARCHAR(50),
+        hoursPerWeek INT,
+        periodType VARCHAR(20)
+      )`,
       `CREATE TABLE IF NOT EXISTS settings (
         id VARCHAR(10) PRIMARY KEY,
         data TEXT
@@ -132,14 +152,82 @@ app.post('/api/db/update-schema', async (req, res) => {
   }
 });
 
-app.get('/api/settings', (req, res) => res.json(readData('settings', {})));
-app.post('/api/settings', (req, res) => {
+app.get('/api/settings', async (req, res) => {
+  const p = getPool();
+  if (p) {
+    try {
+      const [rows] = await p.query('SELECT data FROM settings WHERE id = "default"');
+      if (rows.length > 0) return res.json(JSON.parse(rows[0].data));
+    } catch (err) {
+      console.error('MySQL Read settings error:', err);
+    }
+  }
+  res.json(readData('settings', {}));
+});
+
+app.post('/api/settings', async (req, res) => {
+  const p = getPool();
+  if (p) {
+    try {
+      const data = JSON.stringify(req.body);
+      await p.query(
+        'INSERT INTO settings (id, data) VALUES ("default", ?) ON DUPLICATE KEY UPDATE data = ?',
+        [data, data]
+      );
+      return res.json({ success: true });
+    } catch (err) {
+      console.error('MySQL Write settings error:', err);
+    }
+  }
   writeData('settings', req.body);
   res.json({ success: true });
 });
 
-app.get('/api/subjects', (req, res) => res.json(readData('subjects')));
-app.post('/api/subjects', (req, res) => {
+// MySQL Connection Pool (Lazy initialization)
+let pool;
+function getPool() {
+  if (!pool && process.env.DB_HOST) {
+    pool = mysql.createPool({
+      host: process.env.DB_HOST,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+      port: parseInt(process.env.DB_PORT || '3306'),
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0
+    });
+  }
+  return pool;
+}
+
+app.get('/api/subjects', async (req, res) => {
+  const p = getPool();
+  if (p) {
+    try {
+      const [rows] = await p.query('SELECT * FROM subjects');
+      return res.json(rows);
+    } catch (err) {
+      console.error('MySQL Read subjects error:', err);
+    }
+  }
+  res.json(readData('subjects'));
+});
+
+app.post('/api/subjects', async (req, res) => {
+  const p = getPool();
+  if (p) {
+    try {
+      const { id, code, name, category, hoursPerWeek } = req.body;
+      await p.query(
+        'INSERT INTO subjects (id, code, name, category, hoursPerWeek) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE code=?, name=?, category=?, hoursPerWeek=?',
+        [id, code, name, category, hoursPerWeek, code, name, category, hoursPerWeek]
+      );
+      return res.json({ success: true });
+    } catch (err) {
+      console.error('MySQL Write subjects error:', err);
+    }
+  }
   const items = readData('subjects');
   const index = items.findIndex(i => i.id === req.body.id);
   if (index >= 0) items[index] = req.body;
@@ -148,8 +236,34 @@ app.post('/api/subjects', (req, res) => {
   res.json({ success: true });
 });
 
-app.get('/api/teachers', (req, res) => res.json(readData('teachers')));
-app.post('/api/teachers', (req, res) => {
+app.get('/api/teachers', async (req, res) => {
+  const p = getPool();
+  if (p) {
+    try {
+      const [rows] = await p.query('SELECT * FROM teachers');
+      return res.json(rows.map(r => ({ ...r, expertSubjects: JSON.parse(r.expertSubjects || '[]') })));
+    } catch (err) {
+      console.error('MySQL Read teachers error:', err);
+    }
+  }
+  res.json(readData('teachers'));
+});
+
+app.post('/api/teachers', async (req, res) => {
+  const p = getPool();
+  if (p) {
+    try {
+      const { id, name, expertSubjects, maxHoursPerWeek } = req.body;
+      const subjectsJson = JSON.stringify(expertSubjects);
+      await p.query(
+        'INSERT INTO teachers (id, name, expertSubjects, maxHoursPerWeek) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE name=?, expertSubjects=?, maxHoursPerWeek=?',
+        [id, name, subjectsJson, maxHoursPerWeek, name, subjectsJson, maxHoursPerWeek]
+      );
+      return res.json({ success: true });
+    } catch (err) {
+      console.error('MySQL Write teachers error:', err);
+    }
+  }
   const items = readData('teachers');
   const index = items.findIndex(i => i.id === req.body.id);
   if (index >= 0) items[index] = req.body;
@@ -158,8 +272,33 @@ app.post('/api/teachers', (req, res) => {
   res.json({ success: true });
 });
 
-app.get('/api/classrooms', (req, res) => res.json(readData('classrooms')));
-app.post('/api/classrooms', (req, res) => {
+app.get('/api/classrooms', async (req, res) => {
+  const p = getPool();
+  if (p) {
+    try {
+      const [rows] = await p.query('SELECT * FROM classrooms');
+      return res.json(rows);
+    } catch (err) {
+      console.error('MySQL Read classrooms error:', err);
+    }
+  }
+  res.json(readData('classrooms'));
+});
+
+app.post('/api/classrooms', async (req, res) => {
+  const p = getPool();
+  if (p) {
+    try {
+      const { id, name, level } = req.body;
+      await p.query(
+        'INSERT INTO classrooms (id, name, level) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE name=?, level=?',
+        [id, name, level, name, level]
+      );
+      return res.json({ success: true });
+    } catch (err) {
+      console.error('MySQL Write classrooms error:', err);
+    }
+  }
   const items = readData('classrooms');
   const index = items.findIndex(i => i.id === req.body.id);
   if (index >= 0) items[index] = req.body;
@@ -168,26 +307,78 @@ app.post('/api/classrooms', (req, res) => {
   res.json({ success: true });
 });
 
-app.delete('/api/subjects/:id', (req, res) => {
+app.delete('/api/subjects/:id', async (req, res) => {
+  const p = getPool();
+  if (p) {
+    try {
+      await p.query('DELETE FROM subjects WHERE id = ?', [req.params.id]);
+      return res.json({ success: true });
+    } catch (err) {
+      console.error('MySQL Delete subjects error:', err);
+    }
+  }
   const items = readData('subjects');
   writeData('subjects', items.filter(i => i.id !== req.params.id));
   res.json({ success: true });
 });
 
-app.delete('/api/teachers/:id', (req, res) => {
+app.delete('/api/teachers/:id', async (req, res) => {
+  const p = getPool();
+  if (p) {
+    try {
+      await p.query('DELETE FROM teachers WHERE id = ?', [req.params.id]);
+      return res.json({ success: true });
+    } catch (err) {
+      console.error('MySQL Delete teachers error:', err);
+    }
+  }
   const items = readData('teachers');
   writeData('teachers', items.filter(i => i.id !== req.params.id));
   res.json({ success: true });
 });
 
-app.delete('/api/classrooms/:id', (req, res) => {
+app.delete('/api/classrooms/:id', async (req, res) => {
+  const p = getPool();
+  if (p) {
+    try {
+      await p.query('DELETE FROM classrooms WHERE id = ?', [req.params.id]);
+      return res.json({ success: true });
+    } catch (err) {
+      console.error('MySQL Delete classrooms error:', err);
+    }
+  }
   const items = readData('classrooms');
   writeData('classrooms', items.filter(i => i.id !== req.params.id));
   res.json({ success: true });
 });
 
-app.get('/api/teacher-loads', (req, res) => res.json(readData('teacher-loads')));
-app.post('/api/teacher-loads', (req, res) => {
+app.get('/api/teacher-loads', async (req, res) => {
+  const p = getPool();
+  if (p) {
+    try {
+      const [rows] = await p.query('SELECT * FROM teacher_loads');
+      return res.json(rows);
+    } catch (err) {
+      console.error('MySQL Read teacher_loads error:', err);
+    }
+  }
+  res.json(readData('teacher-loads'));
+});
+
+app.post('/api/teacher-loads', async (req, res) => {
+  const p = getPool();
+  if (p) {
+    try {
+      const { id, teacherId, subjectCode, subjectName, level, room, hoursPerWeek, periodType } = req.body;
+      await p.query(
+        'INSERT INTO teacher_loads (id, teacherId, subjectCode, subjectName, level, room, hoursPerWeek, periodType) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE teacherId=?, subjectCode=?, subjectName=?, level=?, room=?, hoursPerWeek=?, periodType=?',
+        [id, teacherId, subjectCode, subjectName, level, room, hoursPerWeek, periodType, teacherId, subjectCode, subjectName, level, room, hoursPerWeek, periodType]
+      );
+      return res.json({ success: true });
+    } catch (err) {
+      console.error('MySQL Write teacher_loads error:', err);
+    }
+  }
   const items = readData('teacher-loads');
   const index = items.findIndex(i => i.id === req.body.id);
   if (index >= 0) items[index] = req.body;
@@ -198,11 +389,69 @@ app.post('/api/teacher-loads', (req, res) => {
     res.status(500).json({ success: false, error: 'Failed to write data' });
   }
 });
-app.delete('/api/teacher-loads/:id', (req, res) => {
+
+app.delete('/api/teacher-loads/:id', async (req, res) => {
+  const p = getPool();
+  if (p) {
+    try {
+      await p.query('DELETE FROM teacher_loads WHERE id = ?', [req.params.id]);
+      return res.json({ success: true });
+    } catch (err) {
+      console.error('MySQL Delete teacher_load error:', err);
+    }
+  }
   const items = readData('teacher-loads');
   const filtered = items.filter(i => i.id !== req.params.id);
   writeData('teacher-loads', filtered);
   res.json({ success: true });
+});
+
+app.post('/api/timetable/sync', async (req, res) => {
+  const p = getPool();
+  const entries = req.body;
+  
+  if (p) {
+    let connection;
+    try {
+      connection = await p.getConnection();
+      await connection.beginTransaction();
+      
+      // Clear existing records for the classrooms involved or just clear all
+      await connection.query('DELETE FROM timetable');
+      
+      if (entries.length > 0) {
+        const values = entries.map(e => [e.id, e.classroomId, e.subjectId, e.teacherId, e.day, e.period]);
+        await connection.query(
+          'INSERT INTO timetable (id, classroomId, subjectId, teacherId, day, period) VALUES ?',
+          [values]
+        );
+      }
+      
+      await connection.commit();
+      return res.json({ success: true });
+    } catch (err) {
+      if (connection) await connection.rollback();
+      console.error('MySQL Sync Timetable error:', err);
+    } finally {
+      if (connection) connection.release();
+    }
+  }
+  
+  writeData('timetable', entries);
+  res.json({ success: true });
+});
+
+app.get('/api/timetable', async (req, res) => {
+  const p = getPool();
+  if (p) {
+    try {
+      const [rows] = await p.query('SELECT * FROM timetable');
+      return res.json(rows);
+    } catch (err) {
+      console.error('MySQL Read timetable error:', err);
+    }
+  }
+  res.json(readData('timetable'));
 });
 
 // Since IIS (web.config) handles static files through the rewrite rule,

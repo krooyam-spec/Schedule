@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Subject, Teacher, Classroom, TimetableEntry, DEFAULT_SUBJECTS, AppSettings, DEFAULT_SETTINGS } from './types';
+import { Subject, Teacher, Classroom, TimetableEntry, DEFAULT_SUBJECTS, AppSettings, DEFAULT_SETTINGS, TeacherLoad } from './types';
 
 interface AppState {
   subjects: Subject[];
@@ -119,14 +119,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const deleteSubject = async (id: string) => {
     await fetch(`/api/subjects/${id}`, { method: 'DELETE' });
+    setSubjects(prev => prev.filter(s => s.id !== id));
   };
 
   const deleteTeacher = async (id: string) => {
     await fetch(`/api/teachers/${id}`, { method: 'DELETE' });
+    setTeachers(prev => prev.filter(t => t.id !== id));
   };
 
   const deleteClassroom = async (id: string) => {
     await fetch(`/api/classrooms/${id}`, { method: 'DELETE' });
+    setClassrooms(prev => prev.filter(c => c.id !== id));
   };
 
   return (

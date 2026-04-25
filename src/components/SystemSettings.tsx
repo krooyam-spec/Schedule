@@ -7,7 +7,7 @@ import { ActivityPeriod, DayOfWeek, THAI_DAYS } from '../types';
 export const SystemSettings: React.FC = () => {
   const { settings, setSettings, syncSettings } = useAppState();
   const [localSettings, setLocalSettings] = useState(settings);
-  const [activeTab, setActiveTab] = useState<'general' | 'database'>('general');
+  const [activeTab] = useState<'general'>('general');
   const [isSaving, setIsSaving] = useState(false);
   const [isUpdatingDb, setIsUpdatingDb] = useState(false);
 
@@ -32,8 +32,7 @@ export const SystemSettings: React.FC = () => {
     try {
       const res = await fetch('/api/db/update-schema', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(localSettings.dbConfig)
+        headers: { 'Content-Type': 'application/json' }
       });
       const data = await res.json();
       if (data.success) {
@@ -86,14 +85,6 @@ export const SystemSettings: React.FC = () => {
           <p className="text-slate-500 mt-1">กำหนดโครงสร้างเวลาและข้อมูลโรงเรียน</p>
         </div>
         <div className="flex gap-3">
-          <button
-            onClick={handleUpdateDbSchema}
-            disabled={isUpdatingDb}
-            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white px-6 py-2.5 rounded-2xl font-bold transition-all shadow-lg shadow-emerald-100 font-sans"
-          >
-            <RefreshCw size={20} className={isUpdatingDb ? 'animate-spin' : ''} />
-            {isUpdatingDb ? 'กำลังอัพเดทโครงสร้าง...' : 'อัพเดทฐานข้อมูลอัตโนมัติ'}
-          </button>
           <button
             onClick={handleSave}
             disabled={isSaving}
@@ -274,6 +265,27 @@ export const SystemSettings: React.FC = () => {
               ))}
             </AnimatePresence>
           </div>
+        </div>
+      </div>
+
+      <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-6 font-sans">
+        <div className="flex items-center gap-3 text-blue-600 font-bold text-lg">
+          <Database size={24} />
+          <span>จัดการฐานข้อมูล (MySQL)</span>
+        </div>
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+          <div className="space-y-1">
+            <h3 className="font-bold text-slate-800">อัพเดทฐานข้อมูลอัตโนมัติ</h3>
+            <p className="text-sm text-slate-500">ระบบจะทำการสร้างตารางข้อมูลที่จำเป็นโดยใช้การตั้งค่าจากระบบโดยตรง</p>
+          </div>
+          <button
+            onClick={handleUpdateDbSchema}
+            disabled={isUpdatingDb}
+            className="shrink-0 flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white px-8 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-emerald-100"
+          >
+            <RefreshCw size={20} className={isUpdatingDb ? 'animate-spin' : ''} />
+            {isUpdatingDb ? 'กำลังประมวลผล...' : 'เริ่มการอัพเดทฐานข้อมูล'}
+          </button>
         </div>
       </div>
     </div>

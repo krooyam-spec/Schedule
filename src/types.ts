@@ -83,14 +83,6 @@ export interface ActivityPeriod {
   period: number;
 }
 
-export interface DbSettings {
-  host: string;
-  user: string;
-  password?: string;
-  database: string;
-  port: number;
-}
-
 export interface TeacherLoad {
   id: string;
   teacherId: string;
