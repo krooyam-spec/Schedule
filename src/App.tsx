@@ -10,6 +10,7 @@ import { Dashboard } from './components/Dashboard';
 import { SubjectManager } from './components/SubjectManager';
 import { TeacherManager } from './components/TeacherManager';
 import { ClassroomManager } from './components/ClassroomManager';
+import { TeacherLoadManager } from './components/TeacherLoadManager';
 import { TimetableGrid } from './components/TimetableGrid';
 import { SystemSettings } from './components/SystemSettings';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -20,6 +21,7 @@ const AppContent: React.FC = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard': return <Dashboard />;
+      case 'loads': return <TeacherLoadManager />;
       case 'subjects': return <SubjectManager />;
       case 'teachers': return <TeacherManager />;
       case 'classrooms': return <ClassroomManager />;

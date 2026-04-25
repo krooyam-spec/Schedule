@@ -168,9 +168,40 @@ app.post('/api/classrooms', (req, res) => {
   res.json({ success: true });
 });
 
-app.get('/api/timetable', (req, res) => res.json(readData('timetable')));
-app.post('/api/timetable/sync', (req, res) => {
-  writeData('timetable', req.body);
+app.delete('/api/subjects/:id', (req, res) => {
+  const items = readData('subjects');
+  writeData('subjects', items.filter(i => i.id !== req.params.id));
+  res.json({ success: true });
+});
+
+app.delete('/api/teachers/:id', (req, res) => {
+  const items = readData('teachers');
+  writeData('teachers', items.filter(i => i.id !== req.params.id));
+  res.json({ success: true });
+});
+
+app.delete('/api/classrooms/:id', (req, res) => {
+  const items = readData('classrooms');
+  writeData('classrooms', items.filter(i => i.id !== req.params.id));
+  res.json({ success: true });
+});
+
+app.get('/api/teacher-loads', (req, res) => res.json(readData('teacher-loads')));
+app.post('/api/teacher-loads', (req, res) => {
+  const items = readData('teacher-loads');
+  const index = items.findIndex(i => i.id === req.body.id);
+  if (index >= 0) items[index] = req.body;
+  else items.push(req.body);
+  if (writeData('teacher-loads', items)) {
+    res.json({ success: true });
+  } else {
+    res.status(500).json({ success: false, error: 'Failed to write data' });
+  }
+});
+app.delete('/api/teacher-loads/:id', (req, res) => {
+  const items = readData('teacher-loads');
+  const filtered = items.filter(i => i.id !== req.params.id);
+  writeData('teacher-loads', filtered);
   res.json({ success: true });
 });
 

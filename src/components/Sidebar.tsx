@@ -22,9 +22,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
 
   const menuItems = [
     { id: 'dashboard', icon: LayoutDashboard, label: 'แดชบอร์ด' },
-    { id: 'subjects', icon: BookOpen, label: 'วิชาเรียน' },
     { id: 'teachers', icon: Users, label: 'ครูผู้สอน' },
+    { id: 'loads', icon: CalendarDays, label: 'ภาระงานสอน' },
     { id: 'classrooms', icon: School, label: 'ห้องเรียน/กลุ่ม' },
+    { id: 'subjects', icon: BookOpen, label: 'วิชาเรียน' },
     { id: 'timetable', icon: CalendarDays, label: 'ตารางสอน' },
   ];
 

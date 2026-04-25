@@ -6,20 +6,24 @@ interface AppState {
   teachers: Teacher[];
   classrooms: Classroom[];
   timetable: TimetableEntry[];
+  teacherLoads: TeacherLoad[];
   settings: AppSettings;
   setSubjects: React.Dispatch<React.SetStateAction<Subject[]>>;
   setTeachers: React.Dispatch<React.SetStateAction<Teacher[]>>;
   setClassrooms: React.Dispatch<React.SetStateAction<Classroom[]>>;
   setTimetable: React.Dispatch<React.SetStateAction<TimetableEntry[]>>;
+  setTeacherLoads: React.Dispatch<React.SetStateAction<TeacherLoad[]>>;
   setSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
   syncSubject: (subject: Subject) => Promise<void>;
   syncTeacher: (teacher: Teacher) => Promise<void>;
   syncClassroom: (classroom: Classroom) => Promise<void>;
   syncTimetable: (entries: TimetableEntry[]) => Promise<void>;
+  syncTeacherLoad: (load: TeacherLoad) => Promise<void>;
   syncSettings: (settings: AppSettings) => Promise<void>;
   deleteSubject: (id: string) => Promise<void>;
   deleteTeacher: (id: string) => Promise<void>;
   deleteClassroom: (id: string) => Promise<void>;
+  deleteTeacherLoad: (id: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppState | undefined>(undefined);
@@ -29,24 +33,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
   const [timetable, setTimetable] = useState<TimetableEntry[]>([]);
+  const [teacherLoads, setTeacherLoads] = useState<TeacherLoad[]>([]);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
 
   // Load from API
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [subRes, teachRes, classRes, timeRes, settRes] = await Promise.all([
+        const [subRes, teachRes, classRes, timeRes, settRes, loadRes] = await Promise.all([
           fetch('/api/subjects').then(r => r.json()),
           fetch('/api/teachers').then(r => r.json()),
           fetch('/api/classrooms').then(r => r.json()),
           fetch('/api/timetable').then(r => r.json()),
-          fetch('/api/settings').then(r => r.json())
+          fetch('/api/settings').then(r => r.json()),
+          fetch('/api/teacher-loads').then(r => r.json())
         ]);
         
         if (subRes.length > 0) setSubjects(subRes);
         setTeachers(teachRes || []);
         setClassrooms(classRes || []);
         setTimetable(timeRes || []);
+        setTeacherLoads(loadRes || []);
         if (settRes && settRes.schoolName) setSettings(settRes);
       } catch (error) {
         console.error('Failed to fetch data:', error);
@@ -62,6 +69,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newSettings)
     });
+  };
+
+  const syncTeacherLoad = async (load: TeacherLoad) => {
+    await fetch('/api/teacher-loads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(load)
+    });
+  };
+
+  const deleteTeacherLoad = async (id: string) => {
+    await fetch(`/api/teacher-loads/${id}`, { method: 'DELETE' });
+    setTeacherLoads(prev => prev.filter(t => t.id !== id));
   };
 
   // API sync helpers
@@ -111,10 +131,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   return (
     <AppContext.Provider value={{
-      subjects, teachers, classrooms, timetable, settings,
-      setSubjects, setTeachers, setClassrooms, setTimetable, setSettings,
-      syncSubject, syncTeacher, syncClassroom, syncTimetable, syncSettings,
-      deleteSubject, deleteTeacher, deleteClassroom
+      subjects, teachers, classrooms, timetable, teacherLoads, settings,
+      setSubjects, setTeachers, setClassrooms, setTimetable, setTeacherLoads, setSettings,
+      syncSubject, syncTeacher, syncClassroom, syncTimetable, syncTeacherLoad, syncSettings,
+      deleteSubject, deleteTeacher, deleteClassroom, deleteTeacherLoad
     }}>
       {children}
     </AppContext.Provider>
