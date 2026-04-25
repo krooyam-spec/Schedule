@@ -25,16 +25,37 @@ app.use(express.static(STATIC_PATH));
 
 // API Routes
 const DATA_DIR = path.join(__dirname, 'data');
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
+try {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+} catch (err) {
+  console.error('Warning: Could not create data directory. Persistence may fail:', err.message);
+}
 
 const getFilePath = (name) => path.join(DATA_DIR, `${name}.json`);
+
 const readData = (name, defaultData = []) => {
-  const filePath = getFilePath(name);
-  if (!fs.existsSync(filePath)) return defaultData;
-  return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  try {
+    const filePath = getFilePath(name);
+    if (!fs.existsSync(filePath)) return defaultData;
+    const content = fs.readFileSync(filePath, 'utf8');
+    return JSON.parse(content);
+  } catch (err) {
+    console.error(`Read error (${name}):`, err.message);
+    return defaultData;
+  }
 };
+
 const writeData = (name, data) => {
-  fs.writeFileSync(getFilePath(name), JSON.stringify(data, null, 2));
+  try {
+    const filePath = getFilePath(name);
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+    return true;
+  } catch (err) {
+    console.error(`Write error (${name}):`, err.message);
+    return false;
+  }
 };
 
 app.get('/api/health', (req, res) => {
