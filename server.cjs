@@ -9,8 +9,9 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Serve static files from the 'dist' directory
-app.use(express.static(path.join(__dirname, 'dist')));
+const STATIC_PATH = path.join(__dirname, 'dist');
+console.log('Serving static files from:', STATIC_PATH);
+app.use(express.static(STATIC_PATH));
 
 // API Routes
 app.get('/api/health', (req, res) => {
@@ -25,9 +26,9 @@ console.log('Database tables verified.');
 
 // Handle SPA routing - return index.html for all non-API routes
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+  res.sendFile(path.join(STATIC_PATH, 'index.html'));
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
+app.listen(PORT, () => {
+  console.log(`Server running on: ${PORT}`);
 });

@@ -9,7 +9,7 @@ async function runBuild() {
     await build({
       // Pass config inline to avoid Vite's file-based config lookup
       root: __dirname,
-      base: './',
+      base: '/',
       configFile: false, 
       plugins: [react()],
       resolve: {
@@ -20,6 +20,7 @@ async function runBuild() {
       build: {
         outDir: 'dist',
         emptyOutDir: true,
+        assetsDir: 'assets',
         rollupOptions: {
           input: path.resolve(__dirname, 'index.html'),
         },
