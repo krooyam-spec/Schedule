@@ -1,16 +1,12 @@
 // Startup file for Plesk Node.js environment
 // This file loads and runs the server logic from server.cjs
 
-import { spawn } from 'child_process';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const { spawn } = require('child_process');
+const path = require('path');
 
 console.log('Starting SiamSchedule Server...');
 
-const serverPath = path.join(__dirname, 'server.cjs');
+const serverPath = path.resolve(__dirname, 'server.cjs');
 
 const child = spawn('node', [serverPath], {
   stdio: 'inherit',
