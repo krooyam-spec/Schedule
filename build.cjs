@@ -9,7 +9,7 @@ async function runBuild() {
     await build({
       // Pass config inline to avoid Vite's file-based config lookup
       root: __dirname,
-      base: '/',
+      base: './',
       configFile: false, 
       plugins: [react()],
       resolve: {

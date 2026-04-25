@@ -11,6 +11,16 @@ app.use(express.json());
 
 const STATIC_PATH = path.join(__dirname, 'dist');
 console.log('Serving static files from:', STATIC_PATH);
+
+// Explicitly serve the assets directory to be sure
+app.use('/assets', express.static(path.join(STATIC_PATH, 'assets'), {
+  fallthrough: false,
+  setHeaders: (res) => {
+    res.set('Cache-Control', 'public, max-age=31536000, immutable');
+  }
+}));
+
+// Serve other static files
 app.use(express.static(STATIC_PATH));
 
 // API Routes
@@ -18,14 +28,15 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'SiamSchedule Server is running' });
 });
 
-// Database check (Mocking what was in the logs for now to ensure it starts)
+// Database check
 console.log('Checking database connection...');
-// In a real app, you'd use mysql2 here. 
-// For now, we just log to match the user's expected output.
 console.log('Database tables verified.');
 
 // Handle SPA routing - return index.html for all non-API routes
 app.get('*', (req, res) => {
+  if (req.url.startsWith('/api')) {
+    return res.status(404).json({ error: 'API route not found' });
+  }
   res.sendFile(path.join(STATIC_PATH, 'index.html'));
 });
 
