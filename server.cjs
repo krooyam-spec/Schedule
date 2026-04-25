@@ -18,47 +18,35 @@ app.use(cors());
 app.use(express.json());
 
 const STATIC_PATH = path.join(__dirname, 'dist');
+const INDEX_HTML = path.join(STATIC_PATH, 'index.html');
 
 // API Routes
 app.get('/api/health', (req, res) => {
-  let files = [];
-  try {
-    if (fs.existsSync(STATIC_PATH)) {
-      files = fs.readdirSync(STATIC_PATH);
-    }
-  } catch (e) {
-    files = ['Error reading dist: ' + e.message];
-  }
   res.json({ 
     status: 'ok', 
     message: 'SiamSchedule Server is running',
-    staticPath: STATIC_PATH,
-    files: files
+    version: '1.0.1',
+    time: new Date().toISOString()
   });
 });
 
-// Serve static files from the 'dist' directory
-app.use(express.static(STATIC_PATH));
-
-// Handle SPA routing - return index.html for all non-API routes
+// Since IIS (web.config) handles static files through the rewrite rule,
+// we only need to handle the index.html fallback for SPA router paths.
 app.get('*', (req, res) => {
-  // If it's a request for a static file (contains a dot) or an API route that wasn't caught, return 404
-  if (req.url.includes('.') || req.url.startsWith('/api')) {
-    return res.status(404).send('Resource not found');
+  // Return 404 for missing API or static files
+  if (req.url.startsWith('/api') || req.url.includes('.')) {
+    return res.status(404).send('Not Found');
   }
   
-  const indexPath = path.join(STATIC_PATH, 'index.html');
-  
-  // Disable caching for index.html
-  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-  res.sendFile(indexPath, (err) => {
+  res.sendFile(INDEX_HTML, (err) => {
     if (err) {
-      console.error('Error sending index.html:', err);
+      console.error('SPA Fallback Error:', err);
       res.status(500).send('Error loading application index');
     }
   });
 });
 
+// For IIS/iisnode, PORT is usually a string (Named Pipe)
 app.listen(PORT, () => {
-  console.log(`Server running on: ${PORT}`);
+    console.log(`Server is now listening on provided channel: ${PORT}`);
 });
