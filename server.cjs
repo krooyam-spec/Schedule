@@ -9,18 +9,16 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// Log all requests to help debug 404s
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
 const STATIC_PATH = path.join(__dirname, 'dist');
 console.log('Serving static files from:', STATIC_PATH);
 
-// Explicitly serve the assets directory to be sure
-app.use('/assets', express.static(path.join(STATIC_PATH, 'assets'), {
-  fallthrough: false,
-  setHeaders: (res) => {
-    res.set('Cache-Control', 'public, max-age=31536000, immutable');
-  }
-}));
-
-// Serve other static files
+// Serve static files from the 'dist' directory
 app.use(express.static(STATIC_PATH));
 
 // API Routes
@@ -37,6 +35,8 @@ app.get('*', (req, res) => {
   if (req.url.startsWith('/api')) {
     return res.status(404).json({ error: 'API route not found' });
   }
+  // Disable caching for index.html to ensure users see the latest build
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   res.sendFile(path.join(STATIC_PATH, 'index.html'));
 });
 
