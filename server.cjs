@@ -19,7 +19,12 @@ const STATIC_PATH = path.join(__dirname, 'dist');
 console.log('Serving static files from:', STATIC_PATH);
 
 // Serve static files from the 'dist' directory
-app.use(express.static(STATIC_PATH));
+app.use(express.static(STATIC_PATH, {
+  setHeaders: (res, filePath) => {
+    // Optional: Log serving for debug
+    // console.log(`Serving: ${filePath}`);
+  }
+}));
 
 // API Routes
 app.get('/api/health', (req, res) => {
