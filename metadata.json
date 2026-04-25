@@ -1,5 +1,0 @@
-{
-  "name": "SiamSchedule",
-  "description": "App for managing school schedules with automated generation and conflict detection.",
-  "requestFramePermissions": []
-}
